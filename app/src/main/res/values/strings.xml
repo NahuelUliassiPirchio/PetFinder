@@ -1,4 +1,32 @@
 <resources>
     <string name="app_name">PetFinder</string>
     <string name="title_activity_maps">Map</string>
+
+    <array name="pet_names">
+        <item>Ema</item>
+        <item>Toby</item>
+        <item>Sheila</item>
+        <item>Duki</item>
+        <item>Bart</item>
+        <item>Stuart</item>
+    </array>
+
+    <array name="pet_ages">
+        <item>"8"</item>
+        <item>"2"</item>
+        <item>"12"</item>
+        <item>"6"</item>
+        <item>"3"</item>
+        <item>"2"</item>
+    </array>
+
+    <array name="pet_images">
+        <item>@drawable/ema</item>
+        <item>@drawable/toby</item>
+        <item>@drawable/sheila</item>
+        <item>@drawable/duki</item>
+        <item>@drawable/bart</item>
+        <item>@drawable/stuart</item>
+    </array>
+
 </resources>

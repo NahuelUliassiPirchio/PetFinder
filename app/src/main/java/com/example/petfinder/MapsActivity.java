@@ -5,6 +5,9 @@ import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -16,6 +19,8 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.print.PrintAttributes;
 import android.util.Log;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.common.api.ResolvableApiException;
@@ -34,10 +39,18 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.CancellationToken;
+import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.OnTokenCanceledListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -49,34 +62,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     private SupportMapFragment mapFragment;
-    Location currentLocation;
-
+    private Location currentLocation;
+    private MainBottomSheetBehavior bottomSheetBehavior;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        fusedClient = LocationServices.getFusedLocationProviderClient(this);
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+
+        LinearLayout bottomSheetLayout = findViewById(R.id.design_bottom_sheet);
+        bottomSheetBehavior = new MainBottomSheetBehavior(getApplicationContext(), bottomSheetLayout);
+
+        fusedClient = LocationServices.getFusedLocationProviderClient(this);
+
         enableMyLocation();
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(LocationResult locationResult) {
-                if (locationResult == null)
-                    return;
-                for (Location location : locationResult.getLocations()) {
-                    currentLocation = location;
-                    getCurrentLocation();
-                }
-            }
-        };
+
+
     }
 
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+        bottomSheetBehavior.setMainMap(mMap);
         mMap.setMyLocationEnabled(true);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 15));
     }
@@ -97,22 +107,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @SuppressLint("MissingPermission")
     private void getCurrentLocation() {
-        Task<Location> locationTask = fusedClient.getLastLocation();
-        locationTask.addOnSuccessListener(new OnSuccessListener<Location>() {
-            @SuppressLint("MissingPermission")
+        fusedClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, new CancellationToken() {
+            @Override
+            public boolean isCancellationRequested() {
+                return false;
+            }
+
+            @NonNull
+            @Override
+            public CancellationToken onCanceledRequested(@NonNull OnTokenCanceledListener onTokenCanceledListener) {
+                Log.d("CurrentLocation", "CancelRequest");
+                createLocationSettingRequest();
+                CancellationTokenSource cts = new CancellationTokenSource();
+                return cts.getToken();
+            }
+        }).addOnSuccessListener(new OnSuccessListener<Location>() {
             @Override
             public void onSuccess(Location location) {
-                Toast.makeText(getApplicationContext(), "You aren't a fucking asshole", Toast.LENGTH_SHORT).show();
                 if (location != null) {
-                    mapFragment.getMapAsync(MapsActivity.this);
+                    Log.d("CurrentLocation", location.toString());
                     currentLocation = location;
+                    mapFragment.getMapAsync(MapsActivity.this);
                 }
-            }
-        });
-        locationTask.addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                Toast.makeText(getApplicationContext(), "You are a fucking asshole", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -120,11 +136,22 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onStop() {
         super.onStop();
-        fusedClient.removeLocationUpdates(locationCallback);
+        //fusedClient.removeLocationUpdates(locationCallback);
     }
 
     @SuppressLint("MissingPermission")
     private void startLocationUpdates() {
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null)
+                    return;
+                for (Location location : locationResult.getLocations()) {
+                    Log.d("CallbackLocation", location.toString());
+                }
+            }
+        };
+
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setInterval(10000);
         locationRequest.setFastestInterval(5000);
@@ -132,11 +159,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         fusedClient.requestLocationUpdates(locationRequest,
                 locationCallback,
                 Looper.getMainLooper());
-        Toast.makeText(this,"updating location",Toast.LENGTH_SHORT).show();
-        getCurrentLocation();
+        Toast.makeText(this, "updating location", Toast.LENGTH_SHORT).show();
     }
 
-    private void createLocationRequest() {
+    private void createLocationSettingRequest() {
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setInterval(10000);
         locationRequest.setFastestInterval(5000);
@@ -144,12 +170,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
                 .addLocationRequest(locationRequest);
+
         Task<LocationSettingsResponse> task =
                 LocationServices.getSettingsClient(this).checkLocationSettings(builder.build());
         task.addOnSuccessListener(this, new OnSuccessListener<LocationSettingsResponse>() {
             @Override
             public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
-
+                Log.d("SettingRequest", "Success");
             }
         });
 
@@ -161,7 +188,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         ResolvableApiException resolvable = (ResolvableApiException) e;
                         resolvable.startResolutionForResult(MapsActivity.this,
                                 REQUEST_LOCATION_SETTING_RESOLUTION);
-                    } catch (IntentSender.SendIntentException sendEx) {
+                    } catch (IntentSender.SendIntentException ignored) {
                     }
                 }
             }
