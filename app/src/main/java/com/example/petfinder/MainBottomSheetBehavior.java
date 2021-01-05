@@ -2,16 +2,14 @@ package com.example.petfinder;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.widget.Button;
 import android.widget.LinearLayout;
 
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +32,10 @@ public class MainBottomSheetBehavior {
     private void graphicRecycler() {
         initializeData();
 
-        lostPetsAdapter = new SelectionAdapter(petList, mainContext);
+        Button startSearchButton = bottomSheetLinear.findViewById(R.id.start_search_button);
+        lostPetsAdapter = new SelectionAdapter(petList, mainContext, startSearchButton);
         lostPetsRecycler = bottomSheetLinear.findViewById(R.id.lost_pets_recycler);
+        lostPetsRecycler.addItemDecoration(new DividerItemDecoration(mainContext, DividerItemDecoration.HORIZONTAL));
         lostPetsRecycler.setAdapter(lostPetsAdapter);
         lostPetsRecycler.setLayoutManager(new LinearLayoutManager(mainContext, LinearLayoutManager.HORIZONTAL, false));
     }
@@ -53,8 +53,11 @@ public class MainBottomSheetBehavior {
                 .obtainTypedArray(R.array.pet_images);
 
         for (int i = 0; i < petNames.length; i++) {
-            petList.add(new Pet(petNames[i], petAges[i],
-                    petImageResources.getResourceId(i, 0)));
+            petList.add(new Pet(
+                    petNames[i],
+                    petAges[i],
+                    petImageResources.getResourceId(i, 0)
+            ));
         }
         petImageResources.recycle();
     }

@@ -23,7 +23,7 @@
         android:id="@+id/lost_pets_recycler"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:orientation="horizontal" />
 
@@ -33,6 +33,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:enabled="false"
+        android:backgroundTint="@color/light_red"
         android:text="Start searching"
         android:textColor="@color/white" />
 </LinearLayout>

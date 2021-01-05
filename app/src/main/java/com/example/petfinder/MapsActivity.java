@@ -72,7 +72,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
-        LinearLayout bottomSheetLayout = findViewById(R.id.design_bottom_sheet);
+        LinearLayout bottomSheetLayout = findViewById(R.id.bottom_sheet_design);
         bottomSheetBehavior = new MainBottomSheetBehavior(getApplicationContext(), bottomSheetLayout);
 
         fusedClient = LocationServices.getFusedLocationProviderClient(this);

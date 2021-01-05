@@ -1,9 +1,5 @@
 package com.example.petfinder;
 
-import android.media.Image;
-import android.widget.ImageView;
-import android.widget.TextView;
-
 public class Pet {
     private int petImageResource;
     private String petName, petAge;
