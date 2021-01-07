@@ -1,7 +1,11 @@
 package com.example.petfinder;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,6 +34,23 @@ public class SelectionAdapter extends RecyclerView.Adapter<SelectionAdapter.View
         this.pets = pets;
         this.mainContext = mainContext;
         this.startSearchButton = startSearchButton;
+
+        startSearchButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent petFindService = new Intent(mainContext, PetFindService.class);
+                int viewColor = ((ColorDrawable) view.getBackground()).getColor();
+                if (viewColor == Color.RED) {
+                    mainContext.stopService(petFindService);
+                    view.setBackgroundColor(Color.BLACK);
+                } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        mainContext.startForegroundService(petFindService);
+                    } else mainContext.startService(petFindService);
+                    view.setBackgroundColor(Color.RED);
+                }
+            }
+        });
     }
 
     @NonNull
@@ -47,10 +68,10 @@ public class SelectionAdapter extends RecyclerView.Adapter<SelectionAdapter.View
         Glide.with(mainContext).load(currentPet.getPetImageResource()).into(holder.petImage);
     }
 
-    void searchButton (){
+    void searchButton() {
         boolean isSelectedListEmpty = selectedPets.isEmpty();
         startSearchButton.setEnabled(!isSelectedListEmpty);
-        int backgroundColor = !isSelectedListEmpty ? Color.RED: Color.rgb(158,62,55);
+        int backgroundColor = !isSelectedListEmpty ? Color.BLACK : Color.GRAY;
         startSearchButton.setBackgroundColor(backgroundColor);
     }
 

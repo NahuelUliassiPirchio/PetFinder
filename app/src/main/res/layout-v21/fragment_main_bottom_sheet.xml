@@ -33,7 +33,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:enabled="false"
-        android:backgroundTint="@color/light_red"
         android:text="Start searching"
         android:textColor="@color/white" />
 </LinearLayout>
